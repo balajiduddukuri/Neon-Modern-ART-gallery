@@ -116,7 +116,11 @@ export const GalleryWall: React.FC<GalleryWallProps> = ({
                         src={currentArt.url} 
                         alt={`Generative art piece: ${currentArt.prompt}`}
                         onLoad={() => setImageLoaded(true)}
-                        className={`w-full h-full object-cover transition-all duration-1000 ease-in-out ${!imageLoaded ? 'opacity-0 scale-105' : 'opacity-100 scale-100'} ${!isHighContrast && imageLoaded ? 'grayscale-[0.1]' : ''}`}
+                        className={`w-full h-full object-cover transition-all duration-1000 ease-in-out 
+                          ${!imageLoaded ? 'opacity-0 scale-105' : 'opacity-100 scale-100'} 
+                          ${!isHighContrast && imageLoaded ? 'grayscale-[0.1]' : ''}
+                          ${!minimal && !isHighContrast && imageLoaded ? 'group-hover:scale-[1.03] group-hover:brightness-[1.05]' : ''}
+                        `}
                       />
                       
                       {/* Zoom Hint Icon (Visible on hover if not mobile) */}
@@ -145,7 +149,7 @@ export const GalleryWall: React.FC<GalleryWallProps> = ({
                     </>
                   )}
 
-                  {/* Empty State */}
+                  {/* Empty State / Initial Load */}
                   {!currentArt && !isVisuallyLoading && (
                     <div className={`font-serif text-center px-6 ${isHighContrast ? 'text-white' : 'text-neutral-400 opacity-60'}`}>
                       <p className={`${minimal ? 'text-sm' : 'text-xl'} tracking-widest mb-3`}>THE CANVAS AWAITS</p>
@@ -158,20 +162,36 @@ export const GalleryWall: React.FC<GalleryWallProps> = ({
                     {(!currentArt || !imageLoaded) ? "Generating art, please wait..." : "Art loaded."}
                   </div>
 
-                  {/* Visual Loading State */}
+                  {/* Visual Loading State - PROMINENT LOADER */}
                   {(!currentArt || !imageLoaded) && (
-                    <div className={`absolute inset-0 flex flex-col items-center justify-center z-20 transition-opacity duration-500 ${isHighContrast ? 'bg-black' : 'bg-[#e0e0e0]'} ${imageLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                      {/* The Breathing Orb */}
+                    <div className={`absolute inset-0 flex flex-col items-center justify-center z-20 transition-opacity duration-500 ${isHighContrast ? 'bg-black' : 'bg-[#e5e5e5]'} ${imageLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                      
                       {!isHighContrast ? (
-                        <div className="relative">
-                            <div className={`${minimal ? 'w-16 h-16' : 'w-32 h-32'} bg-neutral-300 rounded-full blur-2xl animate-pulse opacity-50`}></div>
-                            <div className={`absolute inset-0 ${minimal ? 'w-16 h-16' : 'w-32 h-32'} bg-white rounded-full blur-[40px] animate-[pulse_3s_ease-in-out_infinite] opacity-40`}></div>
+                        <div className="relative flex items-center justify-center">
+                            {/* Abstract Glow Background */}
+                            <div className={`absolute ${minimal ? 'w-24 h-24' : 'w-64 h-64'} bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse`}></div>
+                            
+                            {/* Rotating Ring */}
+                            <div className={`${minimal ? 'w-10 h-10 border-2' : 'w-20 h-20 border-4'} border-neutral-300 border-t-neutral-800 rounded-full animate-spin`}></div>
+                            
+                            {/* Inner Dot */}
+                            <div className={`absolute ${minimal ? 'w-2 h-2' : 'w-4 h-4'} bg-neutral-800 rounded-full animate-ping`}></div>
                         </div>
                       ) : (
-                        <div className="w-16 h-16 border-4 border-t-yellow-400 border-white rounded-full animate-spin mb-8"></div>
+                        <div className="flex flex-col items-center">
+                           <div className="w-16 h-16 border-8 border-neutral-800 border-t-yellow-400 rounded-full animate-spin mb-6"></div>
+                        </div>
                       )}
+
                       {!minimal && (
-                        <p className={`font-serif tracking-[0.3em] text-xs mt-8 animate-pulse ${isHighContrast ? 'text-yellow-300' : 'text-neutral-500'}`}>MANIFESTING...</p>
+                        <div className="mt-8 text-center space-y-2 z-10">
+                          <p className={`font-serif tracking-[0.3em] text-sm animate-pulse ${isHighContrast ? 'text-yellow-300' : 'text-neutral-800 font-bold'}`}>
+                            CONJURING
+                          </p>
+                          <p className={`text-[10px] uppercase tracking-widest ${isHighContrast ? 'text-white' : 'text-neutral-500'}`}>
+                            Weaving pixels...
+                          </p>
+                        </div>
                       )}
                     </div>
                   )}
@@ -189,7 +209,7 @@ export const GalleryWall: React.FC<GalleryWallProps> = ({
       {/* Full Screen Zoom Overlay */}
       {isZoomed && currentArt && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-300"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-500"
           onClick={toggleZoom}
           role="dialog"
           aria-modal="true"
@@ -207,10 +227,10 @@ export const GalleryWall: React.FC<GalleryWallProps> = ({
           <img 
             src={currentArt.url} 
             alt={currentArt.config.subject} 
-            className="max-h-[95vh] max-w-[95vw] object-contain shadow-2xl cursor-zoom-out"
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image itself? Actually, clicking usually closes lightbox too. Let's keep it consistent or allow pan? For now, clicking image won't close, background will.
+            className="max-h-[95vh] max-w-[95vw] object-contain shadow-2xl cursor-zoom-out animate-in zoom-in-90 duration-500 ease-out"
+            onClick={(e) => e.stopPropagation()} 
           />
-          <div className="absolute bottom-8 text-center text-white/70 font-serif tracking-widest text-sm pointer-events-none">
+          <div className="absolute bottom-8 text-center text-white/70 font-serif tracking-widest text-sm pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
              {currentArt.config.count} {currentArt.config.subject}
           </div>
         </div>

@@ -6,6 +6,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { ArtPiece, GeneratorState, ViewMode } from './types';
 import { generateRandomConfig, constructPrompt } from './services/promptService';
 import { generateArt } from './services/geminiService';
+import { addWatermark } from './services/imageService';
 import { pushToNotion } from './services/notionService';
 import { playSuccessSound, triggerHaptic } from './services/a11yService';
 import { MagnifyingGlassIcon, ArchiveBoxIcon, HeartIcon } from '@heroicons/react/24/outline';
@@ -78,9 +79,12 @@ function App() {
     try {
       const imageData = await generateArt(prompt);
       
+      // Apply Watermark
+      const watermarkedImage = await addWatermark(imageData);
+
       const newPiece: ArtPiece = {
         id: crypto.randomUUID(),
-        url: imageData,
+        url: watermarkedImage,
         config,
         prompt,
         timestamp: Date.now()
