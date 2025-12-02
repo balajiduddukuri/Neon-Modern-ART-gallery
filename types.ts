@@ -1,3 +1,4 @@
+
 export interface ArtConfig {
   subject: string;
   feature: string;
@@ -19,6 +20,8 @@ export enum GeneratorState {
   GENERATING = 'GENERATING',
   ERROR = 'ERROR',
 }
+
+export type ViewMode = 'single' | 'infinite';
 
 export const NEON_COLORS = [
   "neon yellow",
