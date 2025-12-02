@@ -21,7 +21,7 @@ export enum GeneratorState {
   ERROR = 'ERROR',
 }
 
-export type ViewMode = 'single' | 'infinite';
+export type ViewMode = 'single' | 'infinite' | 'favorites';
 
 export const NEON_COLORS = [
   "neon yellow",

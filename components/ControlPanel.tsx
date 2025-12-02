@@ -11,8 +11,13 @@ import {
   Square2StackIcon,
   CheckIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  HeartIcon,
+  Squares2X2Icon,
+  Cog6ToothIcon,
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { playClickSound, triggerHaptic } from '../services/a11yService';
 
 interface ControlPanelProps {
@@ -21,12 +26,17 @@ interface ControlPanelProps {
   isAutoMode: boolean;
   viewMode: ViewMode;
   isHighContrast: boolean;
+  isFavorite?: boolean;
   onToggleAuto: () => void;
   onNext: () => void;
   onDownload: () => void;
   onShare: () => Promise<boolean>;
   onToggleViewMode: () => void;
   onToggleHighContrast: () => void;
+  onToggleFavorite?: () => void;
+  onSwitchToFavorites?: () => void;
+  onOpenSettings: () => void;
+  onPushToNotion: () => Promise<boolean>;
 }
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -35,14 +45,21 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   isAutoMode,
   viewMode,
   isHighContrast,
+  isFavorite = false,
   onToggleAuto,
   onNext,
   onDownload,
   onShare,
   onToggleViewMode,
-  onToggleHighContrast
+  onToggleHighContrast,
+  onToggleFavorite,
+  onSwitchToFavorites,
+  onOpenSettings,
+  onPushToNotion
 }) => {
   const [isShared, setIsShared] = useState(false);
+  const [isNotionPushed, setIsNotionPushed] = useState(false);
+  const [favoriteAnim, setFavoriteAnim] = useState(false);
 
   const handleInteraction = (action: () => void) => {
     playClickSound();
@@ -59,6 +76,28 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       setTimeout(() => setIsShared(false), 2000);
     }
   };
+  
+  const handleNotionClick = async () => {
+    playClickSound();
+    triggerHaptic();
+    const success = await onPushToNotion();
+    if (success) {
+      setIsNotionPushed(true);
+      setTimeout(() => setIsNotionPushed(false), 2000);
+    }
+  };
+
+  const handleFavoriteClick = () => {
+    if (onToggleFavorite) {
+      handleInteraction(() => {
+        onToggleFavorite();
+        if (!isFavorite) {
+            setFavoriteAnim(true);
+            setTimeout(() => setFavoriteAnim(false), 500);
+        }
+      });
+    }
+  };
 
   // High Contrast Styles
   const containerClass = isHighContrast 
@@ -73,7 +112,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
   return (
     <div 
-      className={`w-full max-w-2xl mx-auto mt-8 p-6 transition-all duration-300 ${containerClass}`}
+      className={`w-full max-w-3xl mx-auto mt-8 p-6 transition-all duration-300 ${containerClass}`}
       role="region" 
       aria-label="Gallery Controls"
     >
@@ -107,15 +146,32 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
         
         {/* Left Group: Modes */}
-        <div className="flex items-center gap-4">
-           <button
-            onClick={() => handleInteraction(onToggleViewMode)}
-            className={standardButtonClass + " " + buttonBaseClass}
-            title={viewMode === 'single' ? "Switch to Infinite Feed" : "Switch to Single View"}
-            aria-label={viewMode === 'single' ? "Switch to Infinite Feed View" : "Switch to Single Focus View"}
-          >
-            {viewMode === 'single' ? <QueueListIcon className="w-5 h-5" /> : <Square2StackIcon className="w-5 h-5" />}
-          </button>
+        <div className="flex items-center gap-3 md:gap-4 flex-wrap justify-center">
+           {/* View Mode Toggles */}
+           <div className="flex gap-2">
+             <button
+              onClick={() => handleInteraction(onToggleViewMode)}
+              className={standardButtonClass + " " + buttonBaseClass}
+              title={viewMode === 'single' ? "Switch to Infinite Feed" : "Switch to Single View"}
+              aria-label={viewMode === 'single' ? "Switch to Infinite Feed View" : "Switch to Single Focus View"}
+            >
+              {viewMode === 'single' ? <QueueListIcon className="w-5 h-5" /> : <Square2StackIcon className="w-5 h-5" />}
+            </button>
+             
+             {onSwitchToFavorites && (
+               <button
+                 onClick={() => handleInteraction(onSwitchToFavorites)}
+                 className={`${viewMode === 'favorites' ? 'text-red-500 border-red-500' : standardButtonClass} ${buttonBaseClass}`}
+                 title="Favorites Gallery"
+                 aria-label="View Favorites Gallery"
+                 aria-pressed={viewMode === 'favorites'}
+               >
+                 <Squares2X2Icon className="w-5 h-5" />
+               </button>
+             )}
+           </div>
+
+          <div className="w-px h-8 bg-white/10 mx-1 hidden md:block"></div>
 
           <button
             onClick={() => handleInteraction(onToggleHighContrast)}
@@ -125,6 +181,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             aria-pressed={isHighContrast}
           >
              {isHighContrast ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+          </button>
+          
+          <button
+            onClick={() => handleInteraction(onOpenSettings)}
+            className={standardButtonClass + " " + buttonBaseClass}
+            title="Settings"
+            aria-label="Open Settings"
+          >
+             <Cog6ToothIcon className="w-5 h-5" />
           </button>
 
           <button
@@ -140,12 +205,42 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             aria-pressed={isAutoMode}
           >
             {isAutoMode ? <PauseIcon className="w-4 h-4" /> : <PlayIcon className="w-4 h-4" />}
-            {isAutoMode ? 'Pause' : 'Auto Curate'}
+            <span className="hidden md:inline">{isAutoMode ? 'Pause' : 'Auto Curate'}</span>
           </button>
         </div>
 
         {/* Right Group: Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap justify-center">
+             {/* Favorite Button */}
+             <button
+                onClick={handleFavoriteClick}
+                disabled={!currentArt}
+                className={`${buttonBaseClass} disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 ${
+                  isFavorite 
+                    ? 'bg-red-500/10 text-red-500 border-red-500/50 hover:bg-red-500/20' 
+                    : standardButtonClass
+                } ${favoriteAnim ? 'scale-125 bg-red-500 text-white border-red-500' : ''}`}
+                title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                aria-label={isFavorite ? "Remove current artwork from favorites" : "Add current artwork to favorites"}
+                aria-pressed={isFavorite}
+            >
+                {isFavorite ? <HeartSolidIcon className="w-5 h-5" /> : <HeartIcon className="w-5 h-5" />}
+            </button>
+            
+            <button
+              onClick={handleNotionClick}
+              disabled={!currentArt}
+              className={`${buttonBaseClass} disabled:opacity-30 disabled:cursor-not-allowed ${
+                isNotionPushed 
+                  ? 'bg-blue-600 text-white border-blue-500' 
+                  : standardButtonClass
+              }`}
+              title="Push to Notion"
+              aria-label="Push metadata to Notion"
+            >
+              {isNotionPushed ? <CheckIcon className="w-5 h-5" /> : <CloudArrowUpIcon className="w-5 h-5" />}
+            </button>
+
              <button
             onClick={handleShareClick}
             disabled={!currentArt}
